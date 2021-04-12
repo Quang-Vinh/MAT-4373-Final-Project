@@ -15,6 +15,17 @@ library(tidyverse)
 
 set.seed(42)
 ```
+# Part 2
+
+softmax <- function(y){
+	return(exp(y)/sum(exp(y)))
+}
+
+forward <- function(X, W, b){ 
+  L1 <- W%*%X + b
+  output <- softmax(L1)
+  return(output)
+}
 
 # Part 7
 
