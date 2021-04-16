@@ -5,9 +5,11 @@ author: "UnderGrad Team"
 output: pdf_document
 ---
 
-```{r setup, message=FALSE, warning=FALSE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+```
 
+```{r, message=FALSE, warning=FALSE}
 library(ggthemes)
 library(keras)
 library(R.matlab)
@@ -15,8 +17,12 @@ library(tidyverse)
 
 set.seed(42)
 ```
+
+
+
 # Part 2
 
+```{r}
 softmax <- function(y){
 	return(exp(y)/sum(exp(y)))
 }
@@ -26,10 +32,12 @@ forward <- function(X, W, b){
   output <- softmax(L1)
   return(output)
 }
+```
+
 
 # Part 7
 
-See https://tensorflow.rstudio.com/guide/keras/ for documentation.
+See https://tensorflow.rstudio.com/guide/keras/ for documentation. Here we define the neural network.
 
 ```{r}
 
@@ -50,6 +58,7 @@ for (i in 0:9) {
 
 # Shuffle training dataset
 data_train <- data_train[sample(nrow(data_train)), ]
+data_test <- data_test[sample(nrow(data_test)), ]
 
 # Split into X and Y
 X_train <- data_train %>% select(-Y) %>% as.matrix()
@@ -62,8 +71,8 @@ X_train <- X_train / 255.0
 X_test <- X_test / 255.0
 
 # Convert Y to categorical
-Y_train <- to_categorical(Y_train)
-Y_test <- to_categorical(Y_test)
+Y_train_cat <- to_categorical(Y_train)
+Y_test_cat <- to_categorical(Y_test)
 ```
 
 
@@ -83,23 +92,70 @@ model %>% compile(
 summary(model)
 ```
 
+# Part 8
+
+Training neural network with mini-batch gradient descent.
+
 ```{r, message=FALSE}
 # Train model
 history <- model %>% fit(
-  X_train, Y_train, 
+  X_train, Y_train_cat, 
   epochs = 100, batch_size = 50, 
-  validation_data = list(X_test, Y_test))
+  validation_data = list(X_test, Y_test_cat))
 
 plot(history)
 ```
 
+Displaying 20 digits which were classified correctly
 
+```{r}
 
+# Get predictions on test set
+Y_pred <- model %>% predict_classes(X_test)
 
+# Show correct predictions
+correct_idx <- Y_pred == Y_test
+X_correct <- X_test[correct_idx,]
+Y_correct <- Y_test[correct_idx]
 
+par(mfcol = c(4, 5))
+par(mar = c(0, 0, 3, 0), xaxs = 'i', yaxs = 'i')
 
+for (idx in 1:20) {
+  x <- X_correct[idx,] %>% rev()
+  y <- Y_correct[idx]
+  dim(x) <- c(28, 28)
+  x <- apply(x, 2, rev)
+  
+  image(1:28, 1:28, x, col = gray((0:255) / 255),
+    xlab = '', ylab = '', xaxt = 'n', yaxt = 'n',
+    main = paste('Label: ', y)
+  )
+}
+```
 
+```{r}
+# Show incorrect predictions
+X_incorrect <- X_test[!correct_idx,]
+Y_incorrect <- Y_test[!correct_idx]
+Y_pred_incorrect <- Y_pred[!correct_idx]
 
+par(mfcol = c(2, 5))
+par(mar = c(0, 0, 3, 0), xaxs = 'i', yaxs = 'i')
+
+for (idx in 1:10) {
+  x <- X_incorrect[idx,] %>% rev()
+  y_true <- Y_incorrect[idx]
+  y_pred <- Y_pred_incorrect[idx]
+  dim(x) <- c(28, 28)
+  x <- apply(x, 2, rev)
+  
+  image(1:28, 1:28, x, col = gray((0:255) / 255),
+    xlab = '', ylab = '', xaxt = 'n', yaxt = 'n',
+    main = paste('Label: ', y_true, '\nPred: ', y_pred)
+  )
+}
+```
 
 
 
