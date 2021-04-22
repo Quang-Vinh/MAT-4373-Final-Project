@@ -19,6 +19,83 @@ library(tidyverse)
 set.seed(42)
 ```
 
+# Part 1
+
+The code for generating the images in part 1
+
+
+```{r}
+rotate <- function(x) { t(apply(x, 2, rev))}
+M = readMat("mnist_all.mat")
+par(pty="s")
+par(mfrow=c(10, 10))
+par(mar = c(0, 0, 0, 0))
+
+a -> c(5923, 6742, 5958, 6131, 5842, 5421, 5918, 6265, 5851, 5949) 			#the number of training samples of each digit
+	
+b = sample.int(a[1], 10, replace=FALSE)         					#random sample of zeros
+for(i in b){										#loop that print ten random zeros
+	num <- matrix(M$train0[i,1:784],nrow = 28,ncol = 28)
+	image(rotate(t(num)), col = gray.colors(256), axes = FALSE)
+}
+
+b = sample.int(a[2], 10, replace=FALSE)							#prints ten random ones
+for(i in b){
+	num <- matrix(M$train1[i,1:784],nrow = 28,ncol = 28)
+	image(rotate(t(num)), col = gray.colors(256), axes = FALSE)
+}
+
+b = sample.int(a[3], 10, replace=FALSE)							#prints ten random twos ... etc.
+for(i in b){
+	num <- matrix(M$train2[i,1:784],nrow = 28,ncol = 28)
+	image(rotate(t(num)), col = gray.colors(256), axes = FALSE)	
+}
+
+b = sample.int(a[4], 10, replace=FALSE)
+for(i in b){
+	num <- matrix(M$train3[i,1:784],nrow = 28,ncol = 28)
+	image(rotate(t(num)), col = gray.colors(256), axes = FALSE)
+}
+
+b = sample.int(a[5], 10, replace=FALSE)	
+for(i in b){
+	num <- matrix(M$train4[i,1:784],nrow = 28,ncol = 28)
+	image(rotate(t(num)), col = gray.colors(256), axes = FALSE)
+}
+
+b = sample.int(a[6], 10, replace=FALSE)
+for(i in b){
+	num <- matrix(M$train5[i,1:784],nrow = 28,ncol = 28)
+	image(rotate(t(num)), col = gray.colors(256), axes = FALSE)
+}
+
+b = sample.int(a[7], 10, replace=FALSE)	
+for(i in b){
+	num <- matrix(M$train6[i,1:784],nrow = 28,ncol = 28)
+	image(rotate(t(num)), col = gray.colors(256), axes = FALSE)
+}
+
+b = sample.int(a[8], 10, replace=FALSE)	
+for(i in b){
+	num <- matrix(M$train7[i,1:784],nrow = 28,ncol = 28)
+	image(rotate(t(num)), col = gray.colors(256), axes = FALSE)
+}
+
+b = sample.int(a[9], 10, replace=FALSE)
+for(i in b){
+	num <- matrix(M$train8[i,1:784],nrow = 28,ncol = 28)
+	image(rotate(t(num)), col = gray.colors(256), axes = FALSE)
+}
+
+b = sample.int(a[10], 10, replace=FALSE)	
+for(i in b){
+	num <- matrix(M$train9[i,1:784],nrow = 28,ncol = 28)
+	image(rotate(t(num)), col = gray.colors(256), axes = FALSE)
+}
+
+
+```
+
 
 # Part 2
 
