@@ -134,8 +134,8 @@ correct_idx <- Y_pred == Y_test
 X_correct <- X_test[correct_idx,]
 Y_correct <- Y_test[correct_idx]
 
-par(mfcol = c(4, 5))
-par(mar = c(0, 0, 3, 0), xaxs = 'i', yaxs = 'i')
+par(mfcol = c(2, 10))
+par(mar = c(0, 0, 2, 0), pty = 'm')
 
 for (idx in 1:20) {
   x <- X_correct[idx,] %>% rev()
@@ -154,8 +154,8 @@ for (idx in 1:20) {
 # Save image to png
 png(filename = 'images/part8_20_correct_digits.png')
 
-par(mfcol = c(4, 5))
-par(mar = c(0, 0, 3, 0), xaxs = 'i', yaxs = 'i')
+par(mfcol = c(2, 10))
+par(mar = c(0, 0, 3, 0), pty = 'm', xaxs = 'i', yaxs = 'i')
 
 for (idx in 1:20) {
   x <- X_correct[idx,] %>% rev()
@@ -172,8 +172,6 @@ for (idx in 1:20) {
 dev.off()
 ```
 
-
-
 ```{r}
 # Show incorrect predictions
 X_incorrect <- X_test[!correct_idx,]
@@ -181,7 +179,7 @@ Y_incorrect <- Y_test[!correct_idx]
 Y_pred_incorrect <- Y_pred[!correct_idx]
 
 par(mfcol = c(2, 5))
-par(mar = c(0, 0, 3, 0), xaxs = 'i', yaxs = 'i')
+par(mar = c(0, 0, 2.5, 0), xaxs = 'i', yaxs = 'i')
 
 for (idx in 1:10) {
   x <- X_incorrect[idx,] %>% rev()
