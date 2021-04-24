@@ -113,10 +113,144 @@ forward <- function(X, W, b){
 }
 ```
 
-# Part 3
+---
+title: "Part3-4"
+output:
+  pdf_document: default
+  html_document: default
+---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-# Part 4
+```{r message=FALSE, warning=FALSE}
+library(R.matlab)
+library(plot.matrix)
+M = readMat("mnist_all.mat")
+```
+
+```{r warning=FALSE}
+X_train = matrix(NA,784,0)
+Y_train = matrix(NA,10,0)
+
+for(i in 0:9){
+  X_tmp = t(M[sprintf("train%d",i)][[1]])
+  X_train = cbind(X_train,X_tmp)
+  Y_tmp = matrix(0,10,dim(X_tmp)[2])
+  Y_tmp[i,] = 1
+  Y_train = cbind(Y_train,Y_tmp)
+}
+
+X_train = X_train/255
+```
+
+# Part 3  
+The code is as follows. Function `deriv_multilayer` can calculate gradient of weight matrix $X$ and bias term $b$ using backpropagation method:  
+
+```{r}
+cost <- function(y,label){
+  #Return the cost (neg log likelihood ) of predicted label y and true label .
+  #y and label are both NxM matrix where N is the number of outputs for a single
+  #case , and M is the number of cases 
+  -sum(log(y)*label)
+}
+
+softmax <- function(y){
+  #Return the output of the softmax function for the matrix of output y. y
+  #is an NxM matrix where N is the number of outputs for a single case , and M
+  #is the number of cases 
+  exp(y)/outer(rep(1,dim(y)[1]),apply(exp(y),2,sum))
+}
+
+linear_layer <- function(y,W,b){
+  t(W)%*%y+outer(b,rep(1,dim(y)[2]))
+}
+
+forward <- function(x,W,b){
+  o = linear_layer(x,W,b)
+  prob = softmax(o)
+  return(prob)
+}
+
+deriv_multilayer <- function(x,W,b,y){
+  prob = forward(x,W,b)
+  dW = x%*%t(prob-y)
+  db = apply(prob-y,1,sum)
+  return(list(dW=dW,db=db))
+}
+```
+
+And we calculate the gradient using following code:  
+```{r}
+# initialize W and b
+W = matrix(rnorm(7840,sd = 0.1),784,10)
+b = rnorm(10,sd=0.5)
+
+idx_sample = sample(1:60000,200,replace=F)
+X_train_sample = X_train[,idx_sample]
+Y_train_sample = Y_train[,idx_sample]
+info = deriv_multilayer(X_train,W,b,Y_train)
+dW = info$dW
+db = info$db
+```
+
+# Part 4  
+We also develop the numerical method for calculation of gradient of $W$ and $b$, the code is as follows:  
+
+```{r}
+numeric_derive <- function(x,W,b,y,h=1e-5,rows=NULL,cols=NULL){
+  s1 = dim(W)[1]
+  s2 = dim(W)[2]
+  prob0 = forward (x,W,b)
+  cost0 = cost(prob0,y)
+  if(is.null(rows)){
+    rows = 1:s1
+  }
+  if(is.null(cols)){
+    cols = 1:s2
+  }
+  
+  dW = matrix(NA,s1,s2)
+  db = rep(NA,s2)
+  for(i in rows){
+    for(j in cols){
+      W_tmp = W
+      W_tmp[i,j] = W_tmp[i,j]+h
+      prob1 = forward(x,W_tmp,b)
+      cost1 = cost(prob1,y)
+      dW[i,j] = (cost1-cost0)/h
+    }
+  }
+  
+  for(j in 1:s2){
+    b_tmp = b
+    b_tmp[j] = b[j] + h
+    prob1 = forward(x,W,b_tmp)
+    cost1 = cost(prob1,y)
+    db[j] = (cost1-cost0)/h
+  }
+  return(list(dW=dW,db=db))
+}
+```
+For comparison and verification. We design a simple example such that, we initialize $W$ and $b$ such that $W_{ij}\sim N(0,0.01)$, $i=1,\dots,784$, $j=1,\dots,10$ and $b_j\sim N(0,0.05)$, $j=1,\dots,10$. And we use a sample of 500 data in train set to compute the gradient of $W$ and $b$ (using both backpropagation and numeric method) for this step.
+The corressponding code are as follows:
+
+```{r}
+info = numeric_derive(X_train,W,b,Y_train,rows=111:120)
+dW1 = info$dW
+db1 = info$db
+```
+
+```{r}
+plot(dW[111:115,],main="Gradient of W using backpropagation")
+```
+```{r}
+plot(dW1[111:115,],main="Gradient of W using numeric method")
+```
+
+The above figures shows the colormap of a fraction of gradient $\frac{\partial L}{\partial W}$,($i=111,\dots,115$,$j=1,\dots,10$) computed by both backpropagation method(part3) and numerical method. We find that, the estimated values are almost the same for both method, which verify that we compute the gradient correctly. 
+
 
 # Part 5
 
