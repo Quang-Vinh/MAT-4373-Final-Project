@@ -276,38 +276,52 @@ deriv_multilayer <- function(x,W,b,y){
   return(list(dW=dW,db=db,softyhat=softyhat))
 }
 
-X_train = matrix(NA,784,0)
-Y_train = matrix(NA,10,0)
-for(i in 0:9){
-  X_tmp = t(M[sprintf("train%d",i)][[1]])
-  X_train = cbind(X_train,X_tmp)
-  Y_tmp = matrix(0,10,dim(X_tmp)[2])
-  Y_tmp[i+1,] = 1
-  Y_train = cbind(Y_train,Y_tmp)
+# Load data
+mnist <- M
+data_train <- data.frame()
+data_test <- data.frame()
+
+for (i in 0:9) {
+  train_digit <- mnist[paste0('train', i)][[1]] %>% data.frame
+  train_digit['Y'] <- i
+  data_train <- rbind(train_digit, data_train)
+  
+  test_digit <- mnist[paste0('test', i)][[1]] %>% data.frame
+  test_digit['Y'] <- i
+  data_test <- rbind(test_digit, data_test)
 }
 
-X_test = matrix(NA,784,0)
-Y_test = matrix(NA,10,0)
-for(i in 0:9){
-  X_tmp = t(M[sprintf("test%d",i)][[1]])
-  X_test = cbind(X_test,X_tmp)
-  Y_tmp = matrix(0,10,dim(X_tmp)[2])
-  Y_tmp[i+1,] = 1
-  Y_test = cbind(Y_test,Y_tmp)
-}
+# Shuffle training dataset
+data_train <- data_train[sample(nrow(data_train)), ]
+data_test <- data_test[sample(nrow(data_test)), ]
 
+# Split into X and Y
+X_train <- data_train %>% select(-Y) %>% as.matrix()
+Y_train <- data_train$Y
+X_test <- data_test %>% select(-Y) %>% as.matrix()
+Y_test <- data_test$Y
 
+# Scale by 255
 X_train <- X_train / 255.0
-X <- as.matrix(X_train)
-Y <- as.matrix(Y_train)
+X_test <- X_test / 255.0
 
-X_test <- X_train / 255.0
-Xtest<-as.matrix(X_test)
-Ytest<-as.matrix(Y_test)
+# Convert Y to categorical
+Y_train_cat <- to_categorical(Y_train)
+Y_test_cat <- to_categorical(Y_test)
+
+
+Xtrain<-t(as.matrix(X_train))
+Ytrain<-t(as.matrix(Y_train_cat))
+
+Xtest<-t(as.matrix(X_test))
+Ytest<-t(as.matrix(Y_test_cat))
 
 # Initial value
 lossbatch = numeric()
 testloss = numeric()
+testingindexes<-sample(1:ncol(Ytest),50,replace=FALSE)
+Xtesting <- (Xtest[,testingindexes])
+Ytesting <- (Ytest[,testingindexes])
 MBGD<-function(X,Y,size,rate,ep)
 { 
   n <-ncol(X)
@@ -324,8 +338,6 @@ MBGD<-function(X,Y,size,rate,ep)
       #X and Y for each batch
       Xtemp <- X[,indexes]
       Ytemp <- Y[,indexes]
-      Xtesting <- Xtest[,indexes]
-      Ytesting <- Ytest[,indexes]
       #estimate gradient
       Grad = deriv_multilayer(Xtemp,W,B,Ytemp)
       dW = Grad$dW
@@ -345,15 +357,81 @@ MBGD<-function(X,Y,size,rate,ep)
       testloss <- c(testloss,testlossi)
     }
   }
-  return(list(W,lossbatch,testloss))
+  return(list(W,B,lossbatch,testloss))
 }
-MBGDtest<-MBGD(X=X, Y=Y, size=50,rate=0.01,ep=10)
+MBGDtest<-MBGD(X=Xtrain, Y=Ytrain, size=50,rate=0.01,ep=10)
 #Training
-plot(MBGDtest[[2]])
-#Testing
 plot(MBGDtest[[3]])
+#Testing
+plot(MBGDtest[[4]])
+#Result
+Wresult<-MBGDtest[[1]]
+Bresult<-MBGDtest[[2]]
+softYhattest <- softYhat(Xtest,Wresult,Bresult)
 
+DFYtest <- data.frame(V0=c(softYhattest[1,]),V1=c(softYhattest[2,]),V2=c(softYhattest[3,]),V3=c(softYhattest[4,]),V4=c(softYhattest[5,]),V5=c(softYhattest[6,]),V6=c(softYhattest[7,]),V7=c(softYhattest[8,]),V8=c(softYhattest[9,]),V9=c(softYhattest[10,]))
+colhat<-colnames(DFYtest)[apply(DFYtest,1,which.max)]
+DFYtest <- data.frame(V0=c(Ytest[1,]),V1=c(Ytest[2,]),V2=c(Ytest[3,]),V3=c(Ytest[4,]),V4=c(Ytest[5,]),V5=c(Ytest[6,]),V6=c(Ytest[7,]),V7=c(Ytest[8,]),V8=c(Ytest[9,]),V9=c(Ytest[10,]))
+collable<-colnames(DFYtest)[apply(DFYtest,1,which.max)]
+correct_idx <- collable == colhat
+```
 
+Displaying 20 images classified correctly.
+
+```{r}
+# Save image to png
+png(filename = 'images/part5_20_correct_digits.png')
+
+# Show correct predictions
+X_correct <- X_test[correct_idx,]
+Y_correct <- Y_test[correct_idx]
+
+par(mfcol = c(2, 10))
+par(mar = c(0, 0, 2, 0), pty = 'm')
+
+for (idx in 1:20) {
+  x <- X_correct[idx,] %>% rev()
+  y <- Y_correct[idx]
+  dim(x) <- c(28, 28)
+  x <- apply(x, 2, rev)
+  
+  image(1:28, 1:28, x, col = gray((0:255) / 255),
+    xlab = '', ylab = '', xaxt = 'n', yaxt = 'n',
+    main = paste('Label: ', y)
+  )
+}
+
+dev.off()
+```
+
+Displaying 10 images classified incorrectly.
+
+```{r}
+# Save image to png
+png(filename = 'images/part5_10_incorrect_digits.png')
+
+# Show incorrect predictions
+X_incorrect <- X_test[!correct_idx,]
+Y_incorrect <- Y_test[!correct_idx]
+Y_pred_incorrect <- Y_pred[!correct_idx]
+
+par(mfcol = c(2, 5))
+par(mar = c(0, 0, 2.5, 0), xaxs = 'i', yaxs = 'i')
+
+for (idx in 11:20) {
+  x <- X_incorrect[idx,] %>% rev()
+  y_true <- Y_incorrect[idx]
+  y_pred <- Y_pred_incorrect[idx]
+  dim(x) <- c(28, 28)
+  x <- apply(x, 2, rev)
+  
+  image(1:28, 1:28, x, col = gray((0:255) / 255),
+    xlab = '', ylab = '', xaxt = 'n', yaxt = 'n',
+    main = paste('Label: ', y_true, '\nPred: ', y_pred)
+  )
+}
+
+dev.off()
 ```
 
 
