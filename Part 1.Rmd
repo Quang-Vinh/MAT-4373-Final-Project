@@ -20,6 +20,7 @@ library(tidyverse)
 library(plot.matrix)
 library(dplyr)
 library(RColorBrewer)
+library(tensorflow)
 
 
 set.seed(42)
@@ -252,6 +253,8 @@ The above figures shows the colormap of a fraction of gradient $\frac{\partial L
 
 # Part 6
 
+<!-- Add explanation -->
+
 ```{r}
 
 # prepping format
@@ -466,9 +469,74 @@ dev.off()
 
 # Part 9
 
+```{r}
+
+# selecting the dense layer 
+dense_layer_details <- get_layer(model, index = 1) %>%
+  get_weights() 
+
+# selecting the layer with weights for the 300 units
+layer_weights <- dense_layer_details[[1]]
+
+# random generator for the 2 out of 300 units
+random_index <- sample(1:300, 2, replace=F)
+
+# matrix containing the weights of the first random unit and reshaping into 28x28 matrix
+layer1_w <- layer_weights[, random_index[1]] %>%
+  matrix(nrow = 28,ncol = 28)
+  
+# 28x28 matrix with weights of the second random unit
+layer2_w <- layer_weights[, random_index[2]] %>%
+  matrix(nrow = 28,ncol = 28)
+
+
+```
 
 
 
+```{r}
+
+layer1_viz <- layer1_w %>%    
+  # clean up
+  as_tibble() %>%
+  rowid_to_column(var="x_position") %>%
+  gather(key="y_position", value="weight", -1) %>%
+  mutate(y_position=as.numeric(gsub("V","",y_position))) %>%
+  # graph the heatmap
+  ggplot(aes(x_position, y_position, fill= weight)) + 
+    geom_tile() +
+    theme_minimal() +
+    scale_fill_distiller(palette = "PiYG") +
+    ggtitle(paste("Heatmap of dense layer unit ", random_index[1])) +
+    theme(legend.position="none",
+        axis.title=element_blank(),
+        axis.text=element_blank(),
+        axis.ticks=element_blank(),
+        plot.title = element_text(size=14, face="bold.italic", hjust = 0.5))
+  
+layer2_viz <- layer2_w %>%    
+  # clean up
+  as_tibble() %>%
+  rowid_to_column(var="x_position") %>%
+  gather(key="y_position", value="weight", -1) %>%
+  mutate(y_position=as.numeric(gsub("V","",y_position))) %>%
+  # graph the heatmap
+  ggplot(aes(x_position, y_position, fill= weight)) + 
+    geom_tile() +
+    theme_minimal() +
+    scale_fill_distiller(palette = "PiYG") +
+    ggtitle(paste("Heatmap of dense layer unit ", random_index[2])) +
+    theme(legend.position="none",
+        axis.title=element_blank(),
+        axis.text=element_blank(),
+        axis.ticks=element_blank(),
+        plot.title = element_text(size=14, face="bold.italic", hjust = 0.5))
+  
+par(c(1,2))
+layer1_viz
+layer2_viz
+
+```
 
 
 
