@@ -379,8 +379,8 @@ correct_idx <- collable == colhat
 Displaying 20 images classified correctly.
 
 ```{r}
-# Save image to png
-png(filename = 'images/part5_20_correct_digits.png')
+# # Save image to png
+# png(filename = 'images/part5_20_correct_digits.png')
 
 # Show correct predictions
 X_correct <- X_test[correct_idx,]
@@ -401,24 +401,24 @@ for (idx in 1:20) {
   )
 }
 
-dev.off()
+# dev.off()
 ```
 
 Displaying 10 images classified incorrectly.
 
 ```{r}
-# Save image to png
-png(filename = 'images/part5_10_incorrect_digits.png')
+# # Save image to png
+# png(filename = 'images/part5_10_incorrect_digits.png')
 
 # Show incorrect predictions
 X_incorrect <- X_test[!correct_idx,]
 Y_incorrect <- Y_test[!correct_idx]
-Y_pred_incorrect <- Y_pred[!correct_idx]
+Y_pred_incorrect <- colhat[!correct_idx]
 
 par(mfcol = c(2, 5))
 par(mar = c(0, 0, 2.5, 0), xaxs = 'i', yaxs = 'i')
 
-for (idx in 11:20) {
+for (idx in 1:10) {
   x <- X_incorrect[idx,] %>% rev()
   y_true <- Y_incorrect[idx]
   y_pred <- Y_pred_incorrect[idx]
@@ -431,7 +431,7 @@ for (idx in 11:20) {
   )
 }
 
-dev.off()
+# dev.off()
 ```
 
 
