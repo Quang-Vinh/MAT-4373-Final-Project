@@ -4,6 +4,7 @@ author: "UnderGrad Team"
 header-includes: \usepackage{graphicx}
 # date: "12/04/2021"
 output: pdf_document
+
 ---
 
 ```{r setup, include=FALSE}
@@ -11,10 +12,15 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, message=FALSE, warning=FALSE}
+
 library(ggthemes)
 library(keras)
 library(R.matlab)
 library(tidyverse)
+library(plot.matrix)
+library(dplyr)
+library(RColorBrewer)
+
 
 set.seed(42)
 ```
@@ -31,7 +37,7 @@ par(pty="s")
 par(mfrow=c(10, 10))
 par(mar = c(0, 0, 0, 0))
 
-a -> c(5923, 6742, 5958, 6131, 5842, 5421, 5918, 6265, 5851, 5949) 			#the number of training samples of each digit
+a <- c(5923, 6742, 5958, 6131, 5842, 5421, 5918, 6265, 5851, 5949) 			#the number of training samples of each digit
 	
 b = sample.int(a[1], 10, replace=FALSE)         					#random sample of zeros
 for(i in b){										#loop that print ten random zeros
@@ -113,22 +119,12 @@ forward <- function(X, W, b){
 }
 ```
 
----
-title: "Part3-4"
-output:
-  pdf_document: default
-  html_document: default
----
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r message=FALSE, warning=FALSE}
-library(R.matlab)
-library(plot.matrix)
-M = readMat("mnist_all.mat")
-```
+# ```{r message=FALSE, warning=FALSE}
+# library(R.matlab)
+# library(plot.matrix)
+# M = readMat("mnist_all.mat")
+# ```
 
 ```{r warning=FALSE}
 X_train = matrix(NA,784,0)
@@ -255,6 +251,45 @@ The above figures shows the colormap of a fraction of gradient $\frac{\partial L
 # Part 5
 
 # Part 6
+
+```{r}
+
+# prepping format
+par(mfrow=c(4,3))
+
+# looping for each digit
+
+for(i in 1:10){
+  j=i-1
+  
+  # extract 28x28 matrix with weights for each digit/pixel
+  num_j <- matrix(W[,i],nrow = 28,ncol = 28) %>%
+    
+    # clean up
+    as_tibble() %>%
+    rowid_to_column(var="x_position") %>%
+    gather(key="y_position", value="weight", -1) %>%
+    
+    mutate(y_position=as.numeric(gsub("V","",y_position))) %>%
+  
+    # graph the heatmap
+    ggplot(aes(x_position, y_position, fill= weight)) + 
+      geom_tile() +
+      theme_minimal() +
+      scale_fill_distiller(palette = "RdBu") +
+      ggtitle(paste("Heatmap of digit: ", j)) +
+      theme(legend.position="none",
+            axis.title=element_blank(),
+            axis.text=element_blank(),
+            axis.ticks=element_blank(),
+            plot.title = element_text(size=14, face="bold.italic", hjust = 0.5))
+  
+  # print the graph
+  print(num_j)
+
+}
+```
+
 
 # Part 7
 
