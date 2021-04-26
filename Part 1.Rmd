@@ -135,7 +135,7 @@ for(i in 0:9){
   X_tmp = t(M[sprintf("train%d",i)][[1]])
   X_train = cbind(X_train,X_tmp)
   Y_tmp = matrix(0,10,dim(X_tmp)[2])
-  Y_tmp[i,] = 1
+  Y_tmp[i+1,] = 1
   Y_train = cbind(Y_train,Y_tmp)
 }
 
@@ -250,6 +250,112 @@ The above figures shows the colormap of a fraction of gradient $\frac{\partial L
 
 
 # Part 5
+
+```{r}
+Yhat <- function(y,W,b){
+  t(W)%*%y+outer(b,rep(1,dim(y)[2]))
+}
+
+softmax <- function(y){
+  #Return the output of the softmax function for the matrix of output y. y
+  #is an NxM matrix where N is the number of outputs for a single case , and M
+  #is the number of cases 
+  exp(y)/outer(rep(1,dim(y)[1]),apply(exp(y),2,sum))
+}
+
+softYhat <- function(x,W,b){
+  o = Yhat(x,W,b)
+  prob = softmax(o)
+  return(prob)
+}
+
+deriv_multilayer <- function(x,W,b,y){
+  softyhat = softYhat(x,W,b)
+  dW = x%*%t(softyhat-y)
+  db = apply(softyhat-y,1,sum)
+  return(list(dW=dW,db=db,softyhat=softyhat))
+}
+
+X_train = matrix(NA,784,0)
+Y_train = matrix(NA,10,0)
+for(i in 0:9){
+  X_tmp = t(M[sprintf("train%d",i)][[1]])
+  X_train = cbind(X_train,X_tmp)
+  Y_tmp = matrix(0,10,dim(X_tmp)[2])
+  Y_tmp[i+1,] = 1
+  Y_train = cbind(Y_train,Y_tmp)
+}
+
+X_test = matrix(NA,784,0)
+Y_test = matrix(NA,10,0)
+for(i in 0:9){
+  X_tmp = t(M[sprintf("test%d",i)][[1]])
+  X_test = cbind(X_test,X_tmp)
+  Y_tmp = matrix(0,10,dim(X_tmp)[2])
+  Y_tmp[i+1,] = 1
+  Y_test = cbind(Y_test,Y_tmp)
+}
+
+
+X_train <- X_train / 255.0
+X <- as.matrix(X_train)
+Y <- as.matrix(Y_train)
+
+X_test <- X_train / 255.0
+Xtest<-as.matrix(X_test)
+Ytest<-as.matrix(Y_test)
+
+# Initial value
+lossbatch = numeric()
+testloss = numeric()
+MBGD<-function(X,Y,size,rate,ep)
+{ 
+  n <-ncol(X)
+  W = matrix(rnorm(7840,sd = 0.1),784,10)
+  B = rnorm(10,sd=0.5)
+  #loop for epsilon
+  for (j in (1:ep))
+  {
+    #loop for mini batch
+    for (i in seq(1, n, size))
+    {
+      #choose index for minibatch
+      indexes <- seq(i:(i+size-1))
+      #X and Y for each batch
+      Xtemp <- X[,indexes]
+      Ytemp <- Y[,indexes]
+      Xtesting <- Xtest[,indexes]
+      Ytesting <- Ytest[,indexes]
+      #estimate gradient
+      Grad = deriv_multilayer(Xtemp,W,B,Ytemp)
+      dW = Grad$dW
+      dB = Grad$db
+      #update prameters
+      W <- W - (1 / size) * (rate) * dW
+      B <- B - (1 / size) * (rate) * dB
+      #estimate soft max Y hat for training
+      softyhat = Grad$softyhat
+      #NLL loss for training set
+      lossbatchi = -sum(log(softyhat)*Ytemp)
+      lossbatch<-c(lossbatch,lossbatchi)
+      #estimate soft max Y hat for testing
+      softYhattest <- softYhat(Xtesting,W,B)
+      #NLL loss for testing set
+      testlossi = -sum(log(softYhattest)*Ytesting)
+      testloss <- c(testloss,testlossi)
+    }
+  }
+  return(list(W,lossbatch,testloss))
+}
+MBGDtest<-MBGD(X=X, Y=Y, size=50,rate=0.01,ep=10)
+#Training
+plot(MBGDtest[[2]])
+#Testing
+plot(MBGDtest[[3]])
+
+
+```
+
 
 # Part 6
 
